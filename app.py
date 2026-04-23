@@ -225,11 +225,11 @@ col1, col2, col3, col4, col5, col6 = st.columns(6)
 
 metrics = [
     ("📥", "Total<br>Submitted", total_submitted, "#3b82f6"),
-    ("🏘️", "Pending with<br>ULB", pending_ulb, "#8b5cf6"),
-    ("🏗️", "Pending with<br>UDA", pending_uda, "#06b6d4"),
+    ("🏘️", "Pending with ULB", pending_ulb, "#8b5cf6"),
+    ("🏗️", "Pending with UDA", pending_uda, "#06b6d4"),
     ("⚠️", "Shortfall", pending_ltp, "#f59e0b"),
-    ("📋", "Pending with<br>DT&CP", pending_dtcp, "#10b981"),
-    ("🏛️", "Pending with<br>GOVT", pending_govt, "#ef4444")
+    ("📋", "Pending with DT&CP", pending_dtcp, "#10b981"),
+    ("🏛️", "Pending with GOVT", pending_govt, "#ef4444")
 ]
 
 for col, (icon, label, value, color) in zip([col1, col2, col3, col4, col5, col6], metrics):
