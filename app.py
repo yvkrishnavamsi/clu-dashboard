@@ -5,17 +5,9 @@ import plotly.express as px
 st.set_page_config(
     page_title="CLU Dashboard - AP",
     layout="wide",
-    page_icon="📊",
+    page_icon="🇮🇳",
     initial_sidebar_state="expanded"
 )
-
-# AP Govt Logo + Header
-col1, col2 = st.columns([1, 10])
-with col1:
-    st.image("https://upload.wikimedia.org/wikipedia/commons/1/13/Seal_of_Andhra_Pradesh.png", width=90)
-with col2:
-    st.markdown("# CLU Applications Dashboard")
-    st.markdown("### Government of Andhra Pradesh | Town & Country Planning Department")
 
 st.markdown("---")
 # Custom CSS for better design
