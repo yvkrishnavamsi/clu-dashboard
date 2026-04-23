@@ -159,7 +159,7 @@ st.markdown("""
 st.markdown('<div class="header-bg">', unsafe_allow_html=True)
 col1, col2 = st.columns([0.8, 10])
 with col1:
-    st.image("ap_logo.png", width=70)
+    st.image("ap_logo.png", width=35)
 with col2:
     st.markdown('<div class="header-title">CLU Applications Dashboard</div>', unsafe_allow_html=True)
     st.markdown('<div class="header-subtitle">Government of Andhra Pradesh | Directorate of Town & Country Planning Department</div>', unsafe_allow_html=True)
