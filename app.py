@@ -1,8 +1,7 @@
 import streamlit as st
 import pandas as pd
-import plotly.express as px
 import plotly.graph_objects as go
-import base64
+from PIL import Image
 
 st.set_page_config(
     page_title="AP CLU Dashboard",
@@ -11,21 +10,32 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Professional CSS - Fixed label wrapping + removed blank spaces
+# CSS - Fixed card heights + removed container padding
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
     * { font-family: 'Inter', sans-serif; }
- .main.block-container { padding: 1rem 2rem; max-width: 100%; }
+.main.block-container {
+        padding: 1rem 2rem 0 2rem;
+        max-width: 100%;
+    }
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
+
+    /* Remove default Streamlit gaps */
+.block-container {
+        padding-top: 1rem!important;
+    }
+    div[data-testid="stVerticalBlock"] > div:has(div.element-container) {
+        gap: 0rem;
+    }
 
 .header-container {
         background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
         padding: 1.25rem 2rem;
         border-radius: 12px;
-        margin-bottom: 1.5rem;
+        margin-bottom: 1rem;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         display: flex;
         align-items: center;
@@ -34,12 +44,14 @@ st.markdown("""
 
 .header-logo {
         background: white;
-        padding: 10px 12px;
+        padding: 6px;
         border-radius: 10px;
-        font-weight: 700;
-        font-size: 20px;
-        color: #1e3a8a;
-        letter-spacing: 1px;
+        display: flex;
+        align-items: center;
+    }
+
+.header-logo img {
+        display: block;
     }
 
 .header-title {
@@ -47,7 +59,6 @@ st.markdown("""
         font-size: 26px;
         font-weight: 700;
         margin: 0;
-        letter-spacing: -0.5px;
     }
 
 .header-subtitle {
@@ -60,19 +71,13 @@ st.markdown("""
 .metric-card {
         background: white;
         border-radius: 12px;
-        padding: 1.25rem;
+        padding: 1.25rem 1rem;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         border: 1px solid #e5e7eb;
-        transition: all 0.3s ease;
-        height: 140px;
+        height: 160px;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
-    }
-
-.metric-card:hover {
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-        transform: translateY(-2px);
     }
 
 .metric-label {
@@ -81,20 +86,23 @@ st.markdown("""
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.5px;
-        line-height: 1.4;
-        min-height: 32px;
-        word-wrap: break-word;
+        line-height: 1.3;
+        height: 32px;
+        display: flex;
+        align-items: flex-start;
     }
 
 .metric-value {
         color: #111827;
-        font-size: 36px;
+        font-size: 42px;
         font-weight: 700;
         line-height: 1;
+        text-align: center;
     }
 
 .metric-icon {
-        font-size: 26px;
+        font-size: 28px;
+        text-align: center;
         margin-bottom: 0.5rem;
     }
 
@@ -104,7 +112,8 @@ st.markdown("""
         padding: 1.5rem;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         border: 1px solid #e5e7eb;
-        margin-bottom: 1.5rem;
+        margin-bottom: 1rem;
+        margin-top: 0.5rem;
     }
 
 .section-title {
@@ -154,7 +163,7 @@ st.markdown("""
         border-left: 4px solid #3b82f6;
         padding: 1rem 1.5rem;
         border-radius: 8px;
-        margin-bottom: 1.5rem;
+        margin-bottom: 1rem;
         font-size: 14px;
         color: #1e40af;
         font-weight: 500;
@@ -168,16 +177,32 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Header with text logo - reliable, no image loading issues
-st.markdown('''
-<div class="header-container">
-    <div class="header-logo">AP</div>
-    <div>
-        <div class="header-title">CLU Applications Dashboard</div>
-        <div class="header-subtitle">Government of Andhra Pradesh | Directorate of Town & Country Planning Department</div>
+# STEP 1: Upload your downloaded AP logo to GitHub repo as 'ap_logo.png'
+# STEP 2: Use this header code:
+
+try:
+    logo = Image.open("ap_logo.png")
+    st.markdown(f'''
+    <div class="header-container">
+        <div class="header-logo">
+            <img src="data:image/png;base64,{base64.b64encode(open("ap_logo.png", "rb").read()).decode()}" width="60">
+        </div>
+        <div>
+            <div class="header-title">CLU Applications Dashboard</div>
+            <div class="header-subtitle">Government of Andhra Pradesh | Directorate of Town & Country Planning Department</div>
+        </div>
+    ''', unsafe_allow_html=True)
+except:
+    # Fallback if logo not found
+    st.markdown('''
+    <div class="header-container">
+        <div class="header-logo" style="padding: 10px 12px; font-size: 20px; color: #1e3a8a; font-weight: 700;">AP</div>
+        <div>
+            <div class="header-title">CLU Applications Dashboard</div>
+            <div class="header-subtitle">Government of Andhra Pradesh | Directorate of Town & Country Planning Department</div>
+        </div>
     </div>
-</div>
-''', unsafe_allow_html=True)
+    ''', unsafe_allow_html=True)
 
 sheet_url = "https://docs.google.com/spreadsheets/d/1Q31RezteTX5reV7efFWKTFARF2bJcwRJgGZ5aatKxgg/export?format=csv&gid=0"
 
@@ -234,7 +259,7 @@ pending_ltp = filtered_df[filtered_df['Designation'].str.contains('SHORTFALL')].
 pending_dtcp = filtered_df[filtered_df['Designation'].str.contains('DTCP') & ~filtered_df['Designation'].str.contains('ULB|UDA|APCRDA')].shape[0]
 pending_govt = filtered_df[filtered_df['Designation'].str.contains('GOVT') & ~filtered_df['Designation'].str.contains('ULB|UDA|APCRDA|DTCP')].shape[0]
 
-# Metric Cards - Fixed labels with proper line breaks
+# Metric Cards - All same size now
 col1, col2, col3, col4, col5, col6 = st.columns(6)
 
 metrics = [
@@ -258,10 +283,8 @@ for col, (icon, label, value, color) in zip([col1, col2, col3, col4, col5, col6]
         </div>
         ''', unsafe_allow_html=True)
 
-st.markdown('<div style="margin: 1.5rem 0;"></div>', unsafe_allow_html=True)
-
-# Charts Row - No more blank spaces
-col1, col2 = st.columns([3, 2])
+# Charts Row - No blank spaces
+col1, col2 = st.columns([3, 2], gap="medium")
 
 with col1:
     st.markdown('<div class="chart-container">', unsafe_allow_html=True)
@@ -289,7 +312,7 @@ with col1:
         paper_bgcolor='white',
         font=dict(family='Inter', size=12, color='#6b7280'),
         height=380,
-        margin=dict(t=10, b=0, l=0, r=0),
+        margin=dict(t=10, b=40, l=0, r=0),
         bargap=0.4
     )
     st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
@@ -313,7 +336,7 @@ with col2:
         paper_bgcolor='white',
         font=dict(family='Inter', size=11),
         height=380,
-        margin=dict(t=10, b=0, l=0, r=0),
+        margin=dict(t=10, b=40, l=0, r=0),
         annotations=[dict(text=f'{total_submitted:,}<br>Total', x=0.5, y=0.5, font_size=20, showarrow=False, font_family='Inter')]
     )
     st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
