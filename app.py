@@ -8,6 +8,9 @@ st.set_page_config(
     page_icon="📊",
     initial_sidebar_state="expanded"
 )
+col1, col2, col3 = st.columns([1,6,1])
+with col2:
+    st.image("https://upload.wikimedia.org/wikipedia/commons/1/13/Seal_of_Andhra_Pradesh.png", width=80)
 
 # Custom CSS for better design
 st.markdown("""
