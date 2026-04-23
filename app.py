@@ -1,57 +1,33 @@
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
-from PIL import Image
 
 st.set_page_config(
     page_title="AP CLU Dashboard",
     layout="wide",
-    page_icon="📊",
+    page_icon="ap_logo.png",
     initial_sidebar_state="expanded"
 )
 
-# CSS - Fixed card heights + removed container padding
+# CSS - Fixed everything
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
     * { font-family: 'Inter', sans-serif; }
-.main.block-container {
-        padding: 1rem 2rem 0 2rem;
-        max-width: 100%;
-    }
+.main.block-container { padding: 1rem 2rem 0 2rem; max-width: 100%; }
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
+.block-container { padding-top: 1rem!important; }
+    div[data-testid="stVerticalBlock"] { gap: 0rem; }
+    div[data-testid="column"] { padding: 0 0.5rem; }
 
-    /* Remove default Streamlit gaps */
-.block-container {
-        padding-top: 1rem!important;
-    }
-    div[data-testid="stVerticalBlock"] > div:has(div.element-container) {
-        gap: 0rem;
-    }
-
-.header-container {
+.header-bg {
         background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
         padding: 1.25rem 2rem;
         border-radius: 12px;
         margin-bottom: 1rem;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        display: flex;
-        align-items: center;
-        gap: 1.5rem;
-    }
-
-.header-logo {
-        background: white;
-        padding: 6px;
-        border-radius: 10px;
-        display: flex;
-        align-items: center;
-    }
-
-.header-logo img {
-        display: block;
     }
 
 .header-title {
@@ -59,6 +35,7 @@ st.markdown("""
         font-size: 26px;
         font-weight: 700;
         margin: 0;
+        line-height: 1.2;
     }
 
 .header-subtitle {
@@ -71,39 +48,41 @@ st.markdown("""
 .metric-card {
         background: white;
         border-radius: 12px;
-        padding: 1.25rem 1rem;
+        padding: 1rem;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         border: 1px solid #e5e7eb;
-        height: 160px;
+        height: 165px;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
+        align-items: center;
     }
 
 .metric-label {
         color: #6b7280;
-        font-size: 11px;
+        font-size: 10px;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.5px;
-        line-height: 1.3;
-        height: 32px;
+        line-height: 1.2;
+        height: 28px;
+        text-align: center;
         display: flex;
-        align-items: flex-start;
+        align-items: center;
     }
 
 .metric-value {
         color: #111827;
-        font-size: 42px;
+        font-size: 36px;
         font-weight: 700;
         line-height: 1;
         text-align: center;
     }
 
 .metric-icon {
-        font-size: 28px;
+        font-size: 24px;
         text-align: center;
-        margin-bottom: 0.5rem;
+        height: 28px;
     }
 
 .chart-container {
@@ -112,8 +91,7 @@ st.markdown("""
         padding: 1.5rem;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         border: 1px solid #e5e7eb;
-        margin-bottom: 1rem;
-        margin-top: 0.5rem;
+        margin-top: 1rem;
     }
 
 .section-title {
@@ -163,7 +141,7 @@ st.markdown("""
         border-left: 4px solid #3b82f6;
         padding: 1rem 1.5rem;
         border-radius: 8px;
-        margin-bottom: 1rem;
+        margin: 1rem 0;
         font-size: 14px;
         color: #1e40af;
         font-weight: 500;
@@ -177,32 +155,15 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# STEP 1: Upload your downloaded AP logo to GitHub repo as 'ap_logo.png'
-# STEP 2: Use this header code:
-
-try:
-    logo = Image.open("ap_logo.png")
-    st.markdown(f'''
-    <div class="header-container">
-        <div class="header-logo">
-            <img src="data:image/png;base64,{base64.b64encode(open("ap_logo.png", "rb").read()).decode()}" width="60">
-        </div>
-        <div>
-            <div class="header-title">CLU Applications Dashboard</div>
-            <div class="header-subtitle">Government of Andhra Pradesh | Directorate of Town & Country Planning Department</div>
-        </div>
-    ''', unsafe_allow_html=True)
-except:
-    # Fallback if logo not found
-    st.markdown('''
-    <div class="header-container">
-        <div class="header-logo" style="padding: 10px 12px; font-size: 20px; color: #1e3a8a; font-weight: 700;">AP</div>
-        <div>
-            <div class="header-title">CLU Applications Dashboard</div>
-            <div class="header-subtitle">Government of Andhra Pradesh | Directorate of Town & Country Planning Department</div>
-        </div>
-    </div>
-    ''', unsafe_allow_html=True)
+# Header with working logo using st.image + st.columns
+st.markdown('<div class="header-bg">', unsafe_allow_html=True)
+col1, col2 = st.columns([0.8, 10])
+with col1:
+    st.image("ap_logo.png", width=70)
+with col2:
+    st.markdown('<div class="header-title">CLU Applications Dashboard</div>', unsafe_allow_html=True)
+    st.markdown('<div class="header-subtitle">Government of Andhra Pradesh | Directorate of Town & Country Planning Department</div>', unsafe_allow_html=True)
+st.markdown('</div>', unsafe_allow_html=True)
 
 sheet_url = "https://docs.google.com/spreadsheets/d/1Q31RezteTX5reV7efFWKTFARF2bJcwRJgGZ5aatKxgg/export?format=csv&gid=0"
 
@@ -251,7 +212,7 @@ if selected_uda!= 'All':
 if selected_ulb!= 'All' or selected_uda!= 'All':
     st.markdown(f'<div class="info-banner">🔍 <strong>Active Filters:</strong> ULB: {selected_ulb} | UDA: {selected_uda}</div>', unsafe_allow_html=True)
 
-# Metrics calculation
+# Metrics
 total_submitted = filtered_df['S.no'].count() if 'S.no' in filtered_df.columns else len(filtered_df)
 pending_ulb = filtered_df[filtered_df['Designation'].str.contains('ULB') & ~filtered_df['Designation'].str.contains('UDA|APCRDA|DTCP')].shape[0]
 pending_uda = filtered_df[filtered_df['Designation'].str.contains('UDA|APCRDA') & ~filtered_df['Designation'].str.contains('ULB|DTCP')].shape[0]
@@ -259,7 +220,7 @@ pending_ltp = filtered_df[filtered_df['Designation'].str.contains('SHORTFALL')].
 pending_dtcp = filtered_df[filtered_df['Designation'].str.contains('DTCP') & ~filtered_df['Designation'].str.contains('ULB|UDA|APCRDA')].shape[0]
 pending_govt = filtered_df[filtered_df['Designation'].str.contains('GOVT') & ~filtered_df['Designation'].str.contains('ULB|UDA|APCRDA|DTCP')].shape[0]
 
-# Metric Cards - All same size now
+# Metric Cards
 col1, col2, col3, col4, col5, col6 = st.columns(6)
 
 metrics = [
@@ -275,15 +236,13 @@ for col, (icon, label, value, color) in zip([col1, col2, col3, col4, col5, col6]
     with col:
         st.markdown(f'''
         <div class="metric-card">
-            <div>
-                <div class="metric-icon">{icon}</div>
-                <div class="metric-label">{label}</div>
-            </div>
+            <div class="metric-icon">{icon}</div>
+            <div class="metric-label">{label}</div>
             <div class="metric-value" style="color: {color};">{value:,}</div>
         </div>
         ''', unsafe_allow_html=True)
 
-# Charts Row - No blank spaces
+# Charts
 col1, col2 = st.columns([3, 2], gap="medium")
 
 with col1:
