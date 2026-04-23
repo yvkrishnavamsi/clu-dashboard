@@ -8,76 +8,57 @@ st.set_page_config(
     page_icon="📊",
     initial_sidebar_state="expanded"
 )
-col1, col2, col3 = st.columns([1,6,1])
-with col2:
-    st.image("https://upload.wikimedia.org/wikipedia/commons/1/13/Seal_of_Andhra_Pradesh.png", width=80)
 
 # Custom CSS for better design
 st.markdown("""
 <style>
-    /* Main container */
-   .main.block-container {
+  .main.block-container {
         padding-top: 2rem;
         padding-bottom: 2rem;
     }
-
-    /* Metric cards styling */
     [data-testid="stMetricValue"] {
         font-size: 28px;
         font-weight: 600;
         color: #1f2937;
     }
-
     [data-testid="stMetricLabel"] {
         font-size: 14px;
         color: #6b7280;
         font-weight: 500;
     }
-
-    /* Tabs styling */
-   .stTabs [data-baseweb="tab-list"] {
+  .stTabs [data-baseweb="tab-list"] {
         gap: 8px;
     }
-
-   .stTabs [data-baseweb="tab"] {
+  .stTabs [data-baseweb="tab"] {
         background-color: #f3f4f6;
         border-radius: 8px 8px 0 0;
         padding: 10px 20px;
         font-weight: 500;
     }
-
-   .stTabs [aria-selected="true"] {
+  .stTabs [aria-selected="true"] {
         background-color: #3b82f6;
         color: white;
     }
-
-    /* Sidebar */
     [data-testid="stSidebar"] {
         background-color: #f9fafb;
     }
-
-    /* Headers */
     h1 {
         color: #111827;
         font-weight: 700;
         padding-bottom: 0.5rem;
         border-bottom: 3px solid #3b82f6;
     }
-
     h2, h3 {
         color: #374151;
         font-weight: 600;
     }
-
-    /* Info box */
-   .stAlert {
+  .stAlert {
         background-color: #dbeafe;
         border-left: 4px solid #3b82f6;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# Header with icon
 st.markdown("# 📊 CLU Applications Dashboard")
 st.markdown("### Government of Andhra Pradesh | Town & Country Planning Department")
 st.markdown("---")
@@ -96,11 +77,9 @@ def load_data():
 
 df = load_data()
 
-# Sidebar with better design
 with st.sidebar:
     st.markdown("### 🎯 Filters")
     st.markdown("---")
-
     col1, col2 = st.columns([4,1])
     with col1:
         st.markdown("**Data Controls**")
@@ -108,15 +87,11 @@ with st.sidebar:
         if st.button("🔄", help="Refresh data"):
             st.cache_data.clear()
             st.rerun()
-
     st.markdown("---")
-
     ulb_options = ['All'] + sorted([x for x in df['ULB Name'].dropna().unique() if str(x).strip()!= 'None'])
     uda_options = ['All'] + sorted([x for x in df['UDA Name'].dropna().unique() if str(x).strip()!= 'None'])
-
     selected_ulb = st.selectbox("🏛️ ULB Name", ulb_options)
     selected_uda = st.selectbox("🏢 UDA Name", uda_options)
-
     st.markdown("---")
     st.caption("Data refreshes every 10 minutes automatically")
 
@@ -129,18 +104,15 @@ if 'Designation' not in df.columns:
 
 df['Designation'] = df['Designation'].astype(str).str.upper().str.strip()
 
-# Apply filters
 filtered_df = df.copy()
 if selected_ulb!= 'All':
     filtered_df = filtered_df[filtered_df['ULB Name'] == selected_ulb]
 if selected_uda!= 'All':
     filtered_df = filtered_df[filtered_df['UDA Name'] == selected_uda]
 
-# Show active filters
 if selected_ulb!= 'All' or selected_uda!= 'All':
     st.info(f"**Active Filters:** ULB: `{selected_ulb}` | UDA: `{selected_uda}`")
 
-# Counting logic
 total_submitted = filtered_df['S.no'].count() if 'S.no' in filtered_df.columns else len(filtered_df)
 pending_ulb = filtered_df[filtered_df['Designation'].str.contains('ULB') & ~filtered_df['Designation'].str.contains('UDA|APCRDA|DTCP')].shape[0]
 pending_uda = filtered_df[filtered_df['Designation'].str.contains('UDA|APCRDA') & ~filtered_df['Designation'].str.contains('ULB|DTCP')].shape[0]
@@ -148,7 +120,6 @@ pending_ltp = filtered_df[filtered_df['Designation'].str.contains('SHORTFALL')].
 pending_dtcp = filtered_df[filtered_df['Designation'].str.contains('DTCP') & ~filtered_df['Designation'].str.contains('ULB|UDA|APCRDA')].shape[0]
 pending_govt = filtered_df[filtered_df['Designation'].str.contains('GOVT') & ~filtered_df['Designation'].str.contains('ULB|UDA|APCRDA|DTCP')].shape[0]
 
-# Metrics with better spacing
 st.markdown("### 📈 Key Metrics")
 col1, col2, col3, col4, col5, col6 = st.columns(6)
 col1.metric("Total Submitted", f"{total_submitted:,}", help="Total applications received")
@@ -160,7 +131,6 @@ col6.metric("Pending with GOVT", f"{pending_govt:,}")
 
 st.markdown("---")
 
-# Charts with custom colors
 col1, col2 = st.columns([3, 2])
 with col1:
     st.markdown("### 📊 Pendency by Authority")
@@ -208,7 +178,6 @@ with col2:
 
 st.markdown("---")
 
-# Detailed tables
 st.markdown("### 📋 Detailed Application Data")
 tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
     "📄 All Data",
@@ -230,4 +199,4 @@ with tab4:
 with tab5:
     st.dataframe(filtered_df[filtered_df['Designation'].str.contains('DTCP') & ~filtered_df['Designation'].str.contains('ULB|UDA|APCRDA')], use_container_width=True, hide_index=True)
 with tab6:
-    st.dataframe(filtered_df[filtered_df['Designation'].str.contains('GOVT') & ~filtered_df['Designation'].str.contains('ULB|UDA|APCRDA|DTCP')], use_container_width=True, hide_index=True)ed_df['Designation'].str.contains('GOVT') & ~filtered_df['Designation'].str.contains('ULB|UDA|APCRDA|DTCP')], use_container_width=True, hide_index=True)
+    st.dataframe(filtered_df[filtered_df['Designation'].str.contains('GOVT') & ~filtered_df['Designation'].str.contains('ULB|UDA|APCRDA|DTCP')], use_container_width=True, hide_index=True)
