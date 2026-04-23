@@ -5,7 +5,7 @@ import plotly.graph_objects as go
 st.set_page_config(
     page_title="CLU Applications Dashboard",
     layout="wide",
-    page_icon="📊",
+    page_icon="aplogo.png",
     initial_sidebar_state="expanded"
 )
 
