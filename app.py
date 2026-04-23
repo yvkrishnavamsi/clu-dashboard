@@ -11,11 +11,10 @@ sheet_url = "https://docs.google.com/spreadsheets/d/1Q31RezteTX5reV7efFWKTFARF2b
 def load_data():
     try:
         df = pd.read_csv(sheet_url)
-        df.columns = df.columns.str.strip() # Remove extra spaces from headers
+        df.columns = df.columns.str.strip()
         return df
     except Exception as e:
         st.error(f"Error loading Google Sheet: {e}")
-        st.error("Check: Sheet sharing is 'Anyone with the link - Viewer'")
         return pd.DataFrame()
 
 df = load_data()
@@ -29,35 +28,29 @@ with col2:
 if df.empty:
     st.stop()
 
-# Check required columns exist
 if 'Designation' not in df.columns:
     st.error(f"'Designation' column not found. Available: {df.columns.tolist()}")
-    st.dataframe(df.head())
     st.stop()
 
 df['Designation'] = df['Designation'].astype(str).str.upper().str.strip()
 
-# Your exact counting rules
+# Counting logic
 total_submitted = df['S.no'].count() if 'S.no' in df.columns else len(df)
-
 pending_ulb = df[df['Designation'].str.contains('ULB') & ~df['Designation'].str.contains('UDA|DTCP')].shape[0]
 pending_uda = df[df['Designation'].str.contains('UDA') & ~df['Designation'].str.contains('ULB|DTCP')].shape[0]
 pending_ltp = df[df['Designation'].str.contains('SHORTFALL')].shape[0]
 pending_dtcp = df[df['Designation'].str.contains('DTCP') & ~df['Designation'].str.contains('ULB|UDA')].shape[0]
 pending_govt = df[df['Designation'].str.contains('GOVT') & ~df['Designation'].str.contains('ULB|UDA|DTCP')].shape[0]
 
-total_pending = pending_ulb + pending_uda + pending_ltp + pending_dtcp + pending_govt
-
-# Metrics
+# Metrics - Total Pending removed, 6 columns now
 st.subheader("Application Status Summary")
-c1, c2, c3, c4, c5, c6, c7 = st.columns(7)
+c1, c2, c3, c4, c5, c6 = st.columns(6)
 c1.metric("Total Submitted", total_submitted)
-c2.metric("Pending ULB", pending_ulb)
-c3.metric("Pending UDA", pending_uda)
-c4.metric("LTP Shortfall", pending_ltp)
-c5.metric("Pending DT&CP", pending_dtcp)
-c6.metric("Pending GOVT", pending_govt)
-c7.metric("Total Pending", total_pending)
+c2.metric("Pending with ULB", pending_ulb)
+c3.metric("Pending with UDA", pending_uda)
+c4.metric("Shortfall", pending_ltp)
+c5.metric("Pending with DT&CP", pending_dtcp)
+c6.metric("Pending with GOVT", pending_govt)
 
 st.markdown("---")
 
@@ -66,11 +59,11 @@ col1, col2 = st.columns(2)
 with col1:
     st.subheader("Pendency by Authority")
     chart_data = pd.DataFrame({
-        'Authority': ['ULB', 'UDA', 'LTP Shortfall', 'DT&CP', 'GOVT'],
+        'Authority': ['Pending with ULB', 'Pending with UDA', 'Shortfall', 'Pending with DT&CP', 'Pending with GOVT'],
         'Count': [pending_ulb, pending_uda, pending_ltp, pending_dtcp, pending_govt]
     })
     fig = px.bar(chart_data, x='Authority', y='Count', text='Count', color='Authority')
-    fig.update_layout(showlegend=False)
+    fig.update_layout(showlegend=False, xaxis_title="")
     st.plotly_chart(fig, use_container_width=True)
 
 with col2:
@@ -78,9 +71,9 @@ with col2:
     fig = px.pie(chart_data, values='Count', names='Authority', hole=0.4)
     st.plotly_chart(fig, use_container_width=True)
 
-# Detailed tables with filters
+# Detailed tables
 st.subheader("Detailed Data")
-tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["All Data", "ULB", "UDA", "LTP Shortfall", "DT&CP", "GOVT"])
+tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["All Data", "Pending with ULB", "Pending with UDA", "Shortfall", "Pending with DT&CP", "Pending with GOVT"])
 
 with tab1:
     st.dataframe(df, use_container_width=True, hide_index=True)
