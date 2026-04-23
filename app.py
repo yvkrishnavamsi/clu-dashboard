@@ -10,13 +10,13 @@ sheet_url = "https://docs.google.com/spreadsheets/d/1_BwfciEui4JuSs7fdRV9BPJupBc
 @st.cache_data(ttl=600)
 def load_data():
     try:
-        df = pd.read_csv(sheet_url, header=None) # Read without header to handle multiple sections
+        df = pd.read_csv(sheet_url)
         return df
     except Exception as e:
         st.error(f"Error loading Google Sheet: {e}")
         return pd.DataFrame()
 
-raw_df = load_data()
+df = load_data()
 
 col1, col2 = st.columns([6,1])
 with col2:
@@ -24,29 +24,28 @@ with col2:
         st.cache_data.clear()
         st.rerun()
 
-if raw_df.empty:
+if df.empty:
     st.warning("Could not load data. Check Sheet sharing settings.")
     st.stop()
 
-# Find the TOTAL row - it's the last section in your sheet
-# Look for row where first column contains "TOTAL"
-total_row_index = raw_df[raw_df[0].astype(str).str.contains('TOTAL', case=False, na=False)].index
-if len(total_row_index) == 0:
-    st.error("Could not find TOTAL row in Sheet. Make sure last section has 'TOTAL' in column A.")
-    st.stop()
-
-total_row = raw_df.iloc[total_row_index[-1]] # Get the last TOTAL row
-
-# Extract values: Assuming order is Total, ULB, UDA, DT&CP, GOVT, LTP
+# Find the row with numeric values after "TOTAL" section
+# Your data has: TOTAL row, then header row, then numeric row
 try:
-    total_apps = int(pd.to_numeric(total_row[0], errors='coerce'))
-    ulb_total = int(pd.to_numeric(total_row[1], errors='coerce'))
-    uda_total = int(pd.to_numeric(total_row[2], errors='coerce'))
-    dtcp_total = int(pd.to_numeric(total_row[3], errors='coerce'))
-    govt_total = int(pd.to_numeric(total_row[4], errors='coerce'))
-    ltp_total = int(pd.to_numeric(total_row[5], errors='coerce'))
-except:
-    st.error("Could not parse numbers from TOTAL row. Check that row contains only numbers.")
+    # Find row index where first column is numeric and > 10 (your total is 52)
+    numeric_rows = df[pd.to_numeric(df.iloc[:, 0], errors='coerce').notna()]
+    total_row = numeric_rows[numeric_rows.iloc[:, 0].astype(float) > 10].iloc[-1] # Get last row with total > 10
+    
+    total_apps = int(total_row[0])
+    ulb_total = int(total_row[1])
+    uda_total = int(total_row[2])
+    dtcp_total = int(total_row[3])
+    govt_total = int(total_row[4])
+    ltp_total = int(total_row[5])
+    
+except Exception as e:
+    st.error(f"Could not parse numbers from TOTAL row. Make sure the row with 52, 15, 23, 2, 3, 9 exists.")
+    st.write("Debug - Last 5 rows of your sheet:")
+    st.dataframe(df.tail(5))
     st.stop()
 
 # Top metrics
@@ -79,9 +78,9 @@ with col2:
     fig = px.pie(chart_data, values='Count', names='Authority', hole=0.4)
     st.plotly_chart(fig, use_container_width=True)
 
-# Show the raw data - find where Regular section starts
+# Show the raw data - first 15 rows is your Regular section
 st.subheader("Detailed Authority-wise Data")
-# Display first 15 rows which is your main Regular data
-st.dataframe(pd.read_csv(sheet_url).head(15), use_container_width=True, hide_index=True)
+st.dataframe(df.head(15), use_container_width=True, hide_index=True)
 
+st.caption("Dashboard reads from the numeric TOTAL row. Update numbers in your Sheet and click 🔄 Refresh.")
 st.caption("Dashboard reads from TOTAL row. Update numbers in your Sheet and click 🔄 Refresh. Auto-refresh every 10 mins.")
