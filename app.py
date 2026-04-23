@@ -9,6 +9,8 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+st.image("ed977374e8aa268582d34a8d8b7c68b7.png", width=85)
+
 st.markdown("---")
 # Custom CSS for better design
 st.markdown("""
@@ -61,7 +63,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.markdown("# 📊 CLU Applications Dashboard")
-st.markdown("### Government of Andhra Pradesh | Town & Country Planning Department")
+st.markdown("### Government of Andhra Pradesh | Directorate of Town & Country Planning Department")
 st.markdown("---")
 
 sheet_url = "https://docs.google.com/spreadsheets/d/1Q31RezteTX5reV7efFWKTFARF2bJcwRJgGZ5aatKxgg/export?format=csv&gid=0"
