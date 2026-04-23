@@ -5,18 +5,17 @@ import plotly.express as px
 st.set_page_config(page_title="CLU Applications Dashboard", layout="wide")
 st.title("CLU Applications Dashboard - Andhra Pradesh")
 
-# REPLACE THIS URL with your new Sheet + gid
 sheet_url = "https://docs.google.com/spreadsheets/d/1Q31RezteTX5reV7efFWKTFARF2bJcwRJgGZ5aatKxgg/export?format=csv&gid=0"
 
 @st.cache_data(ttl=600)
 def load_data():
     try:
         df = pd.read_csv(sheet_url)
+        df.columns = df.columns.str.strip() # Remove extra spaces from headers
         return df
     except Exception as e:
         st.error(f"Error loading Google Sheet: {e}")
-        st.error("Check 1: Sheet is set to 'Anyone with the link - Viewer'")
-        st.error("Check 2: The gid in the URL matches your data tab")
+        st.error("Check: Sheet sharing is 'Anyone with the link - Viewer'")
         return pd.DataFrame()
 
 df = load_data()
@@ -30,35 +29,35 @@ with col2:
 if df.empty:
     st.stop()
 
-# Auto-find the TOTAL row by looking for the row with the highest first column value
-try:
-    numeric_col = pd.to_numeric(df.iloc[:, 0], errors='coerce')
-    total_row_index = numeric_col.idxmax() # Row with largest number in col 1, should be your total
-    total_row = df.iloc[total_row_index]
-    
-    total_apps = int(total_row[0])
-    ulb_total = int(total_row[1])
-    uda_total = int(total_row[2])
-    dtcp_total = int(total_row[3])
-    govt_total = int(total_row[4])
-    ltp_total = int(total_row[5])
-    
-except Exception as e:
-    st.error("Could not auto-detect TOTAL row. Showing your Sheet data below:")
-    st.dataframe(df)
-    st.info("Make sure your TOTAL row with numbers is in the sheet. Update the gid if needed.")
+# Check required columns exist
+if 'Designation' not in df.columns:
+    st.error(f"'Designation' column not found. Available: {df.columns.tolist()}")
+    st.dataframe(df.head())
     st.stop()
 
-# Top metrics
-st.subheader("Overall Status Summary")
-col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
-col1.metric("Total Received", total_apps)
-col2.metric("Pending ULB", ulb_total)
-col3.metric("Pending UDA", uda_total)
-col4.metric("LTP Shortfall", ltp_total)
-col5.metric("Pending DT&CP", dtcp_total)
-col6.metric("Pending GOVT", govt_total)
-col7.metric("Total Pending", ulb_total + uda_total + ltp_total + dtcp_total + govt_total)
+df['Designation'] = df['Designation'].astype(str).str.upper().str.strip()
+
+# Your exact counting rules
+total_submitted = df['S.no'].count() if 'S.no' in df.columns else len(df)
+
+pending_ulb = df[df['Designation'].str.contains('ULB') & ~df['Designation'].str.contains('UDA|DTCP')].shape[0]
+pending_uda = df[df['Designation'].str.contains('UDA') & ~df['Designation'].str.contains('ULB|DTCP')].shape[0]
+pending_ltp = df[df['Designation'].str.contains('SHORTFALL')].shape[0]
+pending_dtcp = df[df['Designation'].str.contains('DTCP') & ~df['Designation'].str.contains('ULB|UDA')].shape[0]
+pending_govt = df[df['Designation'].str.contains('GOVT') & ~df['Designation'].str.contains('ULB|UDA|DTCP')].shape[0]
+
+total_pending = pending_ulb + pending_uda + pending_ltp + pending_dtcp + pending_govt
+
+# Metrics
+st.subheader("Application Status Summary")
+c1, c2, c3, c4, c5, c6, c7 = st.columns(7)
+c1.metric("Total Submitted", total_submitted)
+c2.metric("Pending ULB", pending_ulb)
+c3.metric("Pending UDA", pending_uda)
+c4.metric("LTP Shortfall", pending_ltp)
+c5.metric("Pending DT&CP", pending_dtcp)
+c6.metric("Pending GOVT", pending_govt)
+c7.metric("Total Pending", total_pending)
 
 st.markdown("---")
 
@@ -67,8 +66,8 @@ col1, col2 = st.columns(2)
 with col1:
     st.subheader("Pendency by Authority")
     chart_data = pd.DataFrame({
-        'Authority': ['ULB', 'UDA', 'LTP', 'DT&CP', 'GOVT'],
-        'Count': [ulb_total, uda_total, ltp_total, dtcp_total, govt_total]
+        'Authority': ['ULB', 'UDA', 'LTP Shortfall', 'DT&CP', 'GOVT'],
+        'Count': [pending_ulb, pending_uda, pending_ltp, pending_dtcp, pending_govt]
     })
     fig = px.bar(chart_data, x='Authority', y='Count', text='Count', color='Authority')
     fig.update_layout(showlegend=False)
@@ -79,8 +78,21 @@ with col2:
     fig = px.pie(chart_data, values='Count', names='Authority', hole=0.4)
     st.plotly_chart(fig, use_container_width=True)
 
-# Show raw data
-st.subheader("Detailed Authority-wise Data")
-st.dataframe(df.head(15), use_container_width=True, hide_index=True)
+# Detailed tables with filters
+st.subheader("Detailed Data")
+tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["All Data", "ULB", "UDA", "LTP Shortfall", "DT&CP", "GOVT"])
 
-st.caption(f"Reading from Sheet. Update data and click 🔄 Refresh. Auto-refresh: 10 mins.")
+with tab1:
+    st.dataframe(df, use_container_width=True, hide_index=True)
+with tab2:
+    st.dataframe(df[df['Designation'].str.contains('ULB') & ~df['Designation'].str.contains('UDA|DTCP')], use_container_width=True, hide_index=True)
+with tab3:
+    st.dataframe(df[df['Designation'].str.contains('UDA') & ~df['Designation'].str.contains('ULB|DTCP')], use_container_width=True, hide_index=True)
+with tab4:
+    st.dataframe(df[df['Designation'].str.contains('SHORTFALL')], use_container_width=True, hide_index=True)
+with tab5:
+    st.dataframe(df[df['Designation'].str.contains('DTCP') & ~df['Designation'].str.contains('ULB|UDA')], use_container_width=True, hide_index=True)
+with tab6:
+    st.dataframe(df[df['Designation'].str.contains('GOVT') & ~df['Designation'].str.contains('ULB|UDA|DTCP')], use_container_width=True, hide_index=True)
+
+st.caption("Live from Google Sheets. Add/edit rows → Click 🔄 Refresh. Auto-refresh every 10 mins.")
