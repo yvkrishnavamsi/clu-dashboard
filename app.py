@@ -13,15 +13,15 @@ st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
     * { font-family: 'Inter', sans-serif; }
-.main.block-container { padding: 0.5rem 1.5rem; }
+.main.block-container { padding: 0.5rem 1.5rem; max-width: 100%; }
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
 
-    /* Remove all gaps */
 .block-container { padding-top: 0.5rem!important; }
     div[data-testid="stVerticalBlock"] { gap: 0.5rem!important; }
     div[data-testid="column"] { padding: 0 0.25rem!important; }
+    div.element-container { margin: 0!important; padding: 0!important; }
 
 .blue-header {
         background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
@@ -45,6 +45,14 @@ st.markdown("""
         margin: 0.25rem 0 0 0;
         padding: 0;
         font-weight: 500;
+    }
+
+.filter-container {
+        background: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        padding: 0.75rem 1rem;
+        margin-bottom: 0.5rem;
     }
 
 .metric-box {
@@ -86,7 +94,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# BLUE HEADER WITH TITLE INSIDE
+# BLUE HEADER WITH TITLE
 st.markdown('''
 <div class="blue-header">
     <h1>CLU Applications Dashboard</h1>
@@ -108,20 +116,6 @@ def load_data():
 
 df = load_data()
 
-# Sidebar
-with st.sidebar:
-    st.markdown("### 🎯 Data Filters")
-    if st.button("🔄 Refresh Data", use_container_width=True, type="primary"):
-        st.cache_data.clear()
-        st.rerun()
-    st.divider()
-    ulb_options = ['All'] + sorted([x for x in df['ULB Name'].dropna().unique() if str(x).strip()!= 'None'])
-    uda_options = ['All'] + sorted([x for x in df['UDA Name'].dropna().unique() if str(x).strip()!= 'None'])
-    selected_ulb = st.selectbox("🏛️ ULB Name", ulb_options)
-    selected_uda = st.selectbox("🏢 UDA Name", uda_options)
-    st.divider()
-    st.caption("⏱️ Auto-refresh: 10 min")
-
 if df.empty:
     st.stop()
 
@@ -131,7 +125,37 @@ if 'Designation' not in df.columns:
 
 df['Designation'] = df['Designation'].astype(str).str.upper().str.strip()
 
-# Apply filters
+# FILTERS IN MAIN AREA - NOW VISIBLE
+st.markdown('<div class="filter-container">', unsafe_allow_html=True)
+col1, col2, col3, col4 = st.columns([2, 2, 2, 1])
+with col1:
+    ulb_options = ['All'] + sorted([x for x in df['ULB Name'].dropna().unique() if str(x).strip()!= 'None'])
+    selected_ulb = st.selectbox("🏛️ ULB Name", ulb_options, key="main_ulb")
+with col2:
+    uda_options = ['All'] + sorted([x for x in df['UDA Name'].dropna().unique() if str(x).strip()!= 'None'])
+    selected_uda = st.selectbox("🏢 UDA Name", uda_options, key="main_uda")
+with col3:
+    st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
+    if st.button("🔄 Refresh Data", use_container_width=True, type="primary"):
+        st.cache_data.clear()
+        st.rerun()
+with col4:
+    st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
+    st.caption("⏱️ 10 min")
+st.markdown('</div>', unsafe_allow_html=True)
+
+# Sidebar filters too
+with st.sidebar:
+    st.markdown("### 🎯 Data Filters")
+    st.selectbox("🏛️ ULB Name", ulb_options, key="side_ulb", index=ulb_options.index(selected_ulb))
+    st.selectbox("🏢 UDA Name", uda_options, key="side_uda", index=uda_options.index(selected_uda))
+    st.divider()
+    st.caption("⏱️ Auto-refresh: 10 min")
+
+# Apply filters - sync both
+selected_ulb = st.session_state.get('main_ulb', selected_ulb)
+selected_uda = st.session_state.get('main_uda', selected_uda)
+
 filtered_df = df.copy()
 if selected_ulb!= 'All':
     filtered_df = filtered_df[filtered_df['ULB Name'] == selected_ulb]
@@ -171,7 +195,7 @@ for col, (icon, label, value, color) in zip([col1, col2, col3, col4, col5, col6]
         </div>
         ''', unsafe_allow_html=True)
 
-# CHARTS - Using st.container with border=True so they render properly
+# Charts
 col1, col2 = st.columns([3, 2], gap="small")
 
 with col1:
@@ -228,7 +252,7 @@ with col2:
         )
         st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 
-# TABLE - Using st.container with border=True
+# Data Tables
 with st.container(border=True):
     st.markdown("##### 📋 Detailed Application Records")
     tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
