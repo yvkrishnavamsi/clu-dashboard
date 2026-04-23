@@ -9,8 +9,6 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-st.image("ed977374e8aa268582d34a8d8b7c68b7.png", width=85)
-
 st.markdown("---")
 # Custom CSS for better design
 st.markdown("""
