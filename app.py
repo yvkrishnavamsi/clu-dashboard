@@ -2,27 +2,28 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+import base64
 
 st.set_page_config(
     page_title="AP CLU Dashboard",
     layout="wide",
-    page_icon="https://ap.gov.in/wp-content/uploads/2023/08/ap-logo.png",
+    page_icon="📊",
     initial_sidebar_state="expanded"
 )
 
-# Professional CSS
+# Professional CSS - Fixed label wrapping + removed blank spaces
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
     * { font-family: 'Inter', sans-serif; }
-  .main.block-container { padding: 1rem 2rem; max-width: 100%; }
+ .main.block-container { padding: 1rem 2rem; max-width: 100%; }
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
 
- .header-container {
+.header-container {
         background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
-        padding: 1.5rem 2rem;
+        padding: 1.25rem 2rem;
         border-radius: 12px;
         margin-bottom: 1.5rem;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
@@ -31,68 +32,73 @@ st.markdown("""
         gap: 1.5rem;
     }
 
- .header-logo {
+.header-logo {
         background: white;
-        padding: 8px;
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
+        padding: 10px 12px;
+        border-radius: 10px;
+        font-weight: 700;
+        font-size: 20px;
+        color: #1e3a8a;
+        letter-spacing: 1px;
     }
 
- .header-title {
+.header-title {
         color: white;
-        font-size: 28px;
+        font-size: 26px;
         font-weight: 700;
         margin: 0;
         letter-spacing: -0.5px;
     }
 
- .header-subtitle {
+.header-subtitle {
         color: rgba(255, 255, 255, 0.9);
-        font-size: 14px;
+        font-size: 13px;
         margin-top: 0.25rem;
         font-weight: 500;
     }
 
- .metric-card {
+.metric-card {
         background: white;
         border-radius: 12px;
-        padding: 1.5rem;
+        padding: 1.25rem;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         border: 1px solid #e5e7eb;
         transition: all 0.3s ease;
-        height: 100%;
+        height: 140px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
     }
 
- .metric-card:hover {
+.metric-card:hover {
         box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
         transform: translateY(-2px);
     }
 
- .metric-label {
+.metric-label {
         color: #6b7280;
-        font-size: 12px;
-        font-weight: 600;
+        font-size: 11px;
+        font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.5px;
-        margin-bottom: 0.75rem;
-        line-height: 1.3;
+        line-height: 1.4;
+        min-height: 32px;
+        word-wrap: break-word;
     }
 
- .metric-value {
+.metric-value {
         color: #111827;
-        font-size: 32px;
+        font-size: 36px;
         font-weight: 700;
         line-height: 1;
+    }
+
+.metric-icon {
+        font-size: 26px;
         margin-bottom: 0.5rem;
     }
 
- .metric-icon {
-        font-size: 28px;
-        margin-bottom: 0.75rem;
-    }
-
- .chart-container {
+.chart-container {
         background: white;
         border-radius: 12px;
         padding: 1.5rem;
@@ -101,14 +107,11 @@ st.markdown("""
         margin-bottom: 1.5rem;
     }
 
- .section-title {
+.section-title {
         font-size: 18px;
         font-weight: 700;
         color: #111827;
         margin-bottom: 1rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
     }
 
     [data-testid="stSidebar"] {
@@ -116,21 +119,21 @@ st.markdown("""
         border-right: 1px solid #e5e7eb;
     }
 
- .sidebar-title {
+.sidebar-title {
         font-size: 16px;
         font-weight: 700;
         color: #111827;
         margin-bottom: 1rem;
     }
 
- .stTabs [data-baseweb="tab-list"] {
+.stTabs [data-baseweb="tab-list"] {
         gap: 4px;
         background: #f3f4f6;
         padding: 4px;
         border-radius: 10px;
     }
 
- .stTabs [data-baseweb="tab"] {
+.stTabs [data-baseweb="tab"] {
         background: transparent;
         border-radius: 8px;
         padding: 10px 16px;
@@ -140,13 +143,13 @@ st.markdown("""
         border: none;
     }
 
- .stTabs [aria-selected="true"] {
+.stTabs [aria-selected="true"] {
         background: white;
         color: #3b82f6;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     }
 
- .info-banner {
+.info-banner {
         background: linear-gradient(135deg, #dbeafe 0%, #eff6ff 100%);
         border-left: 4px solid #3b82f6;
         padding: 1rem 1.5rem;
@@ -157,7 +160,7 @@ st.markdown("""
         font-weight: 500;
     }
 
- .divider {
+.divider {
         height: 1px;
         background: #e5e7eb;
         margin: 1.5rem 0;
@@ -165,15 +168,13 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Header with AP Govt Logo - Fixed
+# Header with text logo - reliable, no image loading issues
 st.markdown('''
 <div class="header-container">
-    <div class="header-logo">
-        <img src="https://ap.gov.in/wp-content/uploads/2023/08/ap-logo.png" width="60">
-    </div>
+    <div class="header-logo">AP</div>
     <div>
         <div class="header-title">CLU Applications Dashboard</div>
-        <div class="header-subtitle">Government of Andhra Pradesh |Directorate of Town & Country Planning Department</div>
+        <div class="header-subtitle">Government of Andhra Pradesh | Directorate of Town & Country Planning Department</div>
     </div>
 </div>
 ''', unsafe_allow_html=True)
@@ -233,7 +234,7 @@ pending_ltp = filtered_df[filtered_df['Designation'].str.contains('SHORTFALL')].
 pending_dtcp = filtered_df[filtered_df['Designation'].str.contains('DTCP') & ~filtered_df['Designation'].str.contains('ULB|UDA|APCRDA')].shape[0]
 pending_govt = filtered_df[filtered_df['Designation'].str.contains('GOVT') & ~filtered_df['Designation'].str.contains('ULB|UDA|APCRDA|DTCP')].shape[0]
 
-# Metric Cards - Fixed icons and labels
+# Metric Cards - Fixed labels with proper line breaks
 col1, col2, col3, col4, col5, col6 = st.columns(6)
 
 metrics = [
@@ -249,15 +250,17 @@ for col, (icon, label, value, color) in zip([col1, col2, col3, col4, col5, col6]
     with col:
         st.markdown(f'''
         <div class="metric-card">
-            <div class="metric-icon">{icon}</div>
-            <div class="metric-label">{label}</div>
+            <div>
+                <div class="metric-icon">{icon}</div>
+                <div class="metric-label">{label}</div>
+            </div>
             <div class="metric-value" style="color: {color};">{value:,}</div>
         </div>
         ''', unsafe_allow_html=True)
 
 st.markdown('<div style="margin: 1.5rem 0;"></div>', unsafe_allow_html=True)
 
-# Charts Row
+# Charts Row - No more blank spaces
 col1, col2 = st.columns([3, 2])
 
 with col1:
