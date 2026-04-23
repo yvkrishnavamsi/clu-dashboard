@@ -3,13 +3,13 @@ import pandas as pd
 import plotly.graph_objects as go
 
 st.set_page_config(
-    page_title="AP CLU Dashboard",
+    page_title="CLU Applications Dashboard",
     layout="wide",
-    page_icon="ap_logo.png",
+    page_icon="📊",
     initial_sidebar_state="expanded"
 )
 
-# CSS - Fixed everything
+# CSS - Removed logo, killed all gaps, fixed card sizes
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
@@ -18,21 +18,25 @@ st.markdown("""
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
+
+    /* NUCLEAR OPTION - KILL ALL SPACING */
 .block-container { padding-top: 1rem!important; }
-    div[data-testid="stVerticalBlock"] { gap: 0rem; }
-    div[data-testid="column"] { padding: 0 0.5rem; }
+    div[data-testid="stVerticalBlock"] { gap: 0!important; }
+    div[data-testid="column"] { padding: 0 0.3rem!important; }
+    div.element-container { margin: 0!important; padding: 0!important; }
+    div.stMarkdown { margin: 0!important; }
 
 .header-bg {
         background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
-        padding: 1.25rem 2rem;
+        padding: 1rem 1.5rem;
         border-radius: 12px;
-        margin-bottom: 1rem;
+        margin-bottom: 0.75rem;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     }
 
 .header-title {
         color: white;
-        font-size: 26px;
+        font-size: 24px;
         font-weight: 700;
         margin: 0;
         line-height: 1.2;
@@ -40,65 +44,71 @@ st.markdown("""
 
 .header-subtitle {
         color: rgba(255, 255, 255, 0.9);
-        font-size: 13px;
+        font-size: 12px;
         margin-top: 0.25rem;
         font-weight: 500;
     }
 
 .metric-card {
         background: white;
-        border-radius: 12px;
-        padding: 1rem;
+        border-radius: 10px;
+        padding: 0.75rem 0.5rem;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         border: 1px solid #e5e7eb;
-        height: 165px;
+        height: 150px!important;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
         align-items: center;
+        overflow: hidden;
+        margin-bottom: 0.75rem;
     }
 
 .metric-label {
         color: #6b7280;
-        font-size: 10px;
+        font-size: 9px;
         font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
-        line-height: 1.2;
-        height: 28px;
+        letter-spacing: 0.3px;
+        line-height: 1.1;
+        height: 22px;
         text-align: center;
         display: flex;
         align-items: center;
+        justify-content: center;
+        width: 100%;
     }
 
 .metric-value {
         color: #111827;
-        font-size: 36px;
+        font-size: 30px!important;
         font-weight: 700;
         line-height: 1;
         text-align: center;
+        margin: 0.2rem 0;
     }
 
 .metric-icon {
-        font-size: 24px;
+        font-size: 18px;
         text-align: center;
-        height: 28px;
+        height: 22px;
+        line-height: 1;
     }
 
 .chart-container {
         background: white;
         border-radius: 12px;
-        padding: 1.5rem;
+        padding: 1.25rem;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         border: 1px solid #e5e7eb;
-        margin-top: 1rem;
+        margin-top: 0.5rem;
     }
 
 .section-title {
-        font-size: 18px;
+        font-size: 16px;
         font-weight: 700;
         color: #111827;
-        margin-bottom: 1rem;
+        margin-bottom: 0.75rem;
     }
 
     [data-testid="stSidebar"] {
@@ -107,7 +117,7 @@ st.markdown("""
     }
 
 .sidebar-title {
-        font-size: 16px;
+        font-size: 15px;
         font-weight: 700;
         color: #111827;
         margin-bottom: 1rem;
@@ -123,9 +133,9 @@ st.markdown("""
 .stTabs [data-baseweb="tab"] {
         background: transparent;
         border-radius: 8px;
-        padding: 10px 16px;
+        padding: 8px 12px;
         font-weight: 600;
-        font-size: 13px;
+        font-size: 12px;
         color: #6b7280;
         border: none;
     }
@@ -139,10 +149,10 @@ st.markdown("""
 .info-banner {
         background: linear-gradient(135deg, #dbeafe 0%, #eff6ff 100%);
         border-left: 4px solid #3b82f6;
-        padding: 1rem 1.5rem;
+        padding: 0.75rem 1.25rem;
         border-radius: 8px;
-        margin: 1rem 0;
-        font-size: 14px;
+        margin: 0.5rem 0;
+        font-size: 13px;
         color: #1e40af;
         font-weight: 500;
     }
@@ -150,19 +160,15 @@ st.markdown("""
 .divider {
         height: 1px;
         background: #e5e7eb;
-        margin: 1.5rem 0;
+        margin: 1rem 0;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# Header with working logo using st.image + st.columns
+# Header - NO LOGO
 st.markdown('<div class="header-bg">', unsafe_allow_html=True)
-col1, col2 = st.columns([0.8, 10])
-with col1:
-    st.image("ap_logo.png", width=70)
-with col2:
-    st.markdown('<div class="header-title">CLU Applications Dashboard</div>', unsafe_allow_html=True)
-    st.markdown('<div class="header-subtitle">Government of Andhra Pradesh | Directorate of Town & Country Planning Department</div>', unsafe_allow_html=True)
+st.markdown('<div class="header-title">CLU Applications Dashboard</div>', unsafe_allow_html=True)
+st.markdown('<div class="header-subtitle">Government of Andhra Pradesh | Directorate of Town & Country Planning Department</div>', unsafe_allow_html=True)
 st.markdown('</div>', unsafe_allow_html=True)
 
 sheet_url = "https://docs.google.com/spreadsheets/d/1Q31RezteTX5reV7efFWKTFARF2bJcwRJgGZ5aatKxgg/export?format=csv&gid=0"
@@ -220,8 +226,8 @@ pending_ltp = filtered_df[filtered_df['Designation'].str.contains('SHORTFALL')].
 pending_dtcp = filtered_df[filtered_df['Designation'].str.contains('DTCP') & ~filtered_df['Designation'].str.contains('ULB|UDA|APCRDA')].shape[0]
 pending_govt = filtered_df[filtered_df['Designation'].str.contains('GOVT') & ~filtered_df['Designation'].str.contains('ULB|UDA|APCRDA|DTCP')].shape[0]
 
-# Metric Cards
-col1, col2, col3, col4, col5, col6 = st.columns(6)
+# Metric Cards - smaller to fit numbers
+col1, col2, col3, col4, col5, col6 = st.columns(6, gap="small")
 
 metrics = [
     ("📥", "Total<br>Submitted", total_submitted, "#3b82f6"),
@@ -242,7 +248,7 @@ for col, (icon, label, value, color) in zip([col1, col2, col3, col4, col5, col6]
         </div>
         ''', unsafe_allow_html=True)
 
-# Charts
+# Charts - no blanks between metrics and charts
 col1, col2 = st.columns([3, 2], gap="medium")
 
 with col1:
@@ -260,18 +266,18 @@ with col1:
         marker=dict(color=colors, line=dict(color='white', width=2)),
         text=chart_data['Count'],
         textposition='outside',
-        textfont=dict(size=13, family='Inter', color='#374151', weight=600),
+        textfont=dict(size=12, family='Inter', color='#374151', weight=600),
         hovertemplate='<b>%{x}</b><br>Count: %{y}<extra></extra>'
     ))
     fig.update_layout(
         showlegend=False,
-        xaxis=dict(showgrid=False, zeroline=False),
+        xaxis=dict(showgrid=False, zeroline=False, tickfont=dict(size=10)),
         yaxis=dict(showgrid=True, gridcolor='#f3f4f6', zeroline=False),
         plot_bgcolor='white',
         paper_bgcolor='white',
-        font=dict(family='Inter', size=12, color='#6b7280'),
-        height=380,
-        margin=dict(t=10, b=40, l=0, r=0),
+        font=dict(family='Inter', size=11, color='#6b7280'),
+        height=350,
+        margin=dict(t=10, b=60, l=0, r=0),
         bargap=0.4
     )
     st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
@@ -286,17 +292,17 @@ with col2:
         hole=0.65,
         marker=dict(colors=colors, line=dict(color='white', width=3)),
         textinfo='label+percent',
-        textfont=dict(size=11, family='Inter'),
+        textfont=dict(size=10, family='Inter'),
         hovertemplate='<b>%{label}</b><br>Count: %{value}<br>Percent: %{percent}<extra></extra>'
     )])
     fig.update_layout(
         showlegend=False,
         plot_bgcolor='white',
         paper_bgcolor='white',
-        font=dict(family='Inter', size=11),
-        height=380,
-        margin=dict(t=10, b=40, l=0, r=0),
-        annotations=[dict(text=f'{total_submitted:,}<br>Total', x=0.5, y=0.5, font_size=20, showarrow=False, font_family='Inter')]
+        font=dict(family='Inter', size=10),
+        height=350,
+        margin=dict(t=10, b=60, l=0, r=0),
+        annotations=[dict(text=f'{total_submitted:,}<br>Total', x=0.5, y=0.5, font_size=18, showarrow=False, font_family='Inter')]
     )
     st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
     st.markdown('</div>', unsafe_allow_html=True)
