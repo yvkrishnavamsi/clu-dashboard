@@ -162,19 +162,36 @@ if selected_uda!= 'All':
 if selected_ulb!= 'All' or selected_uda!= 'All':
     st.info(f"🔍 **Active Filters:** ULB: {selected_ulb} | UDA: {selected_uda}")
 
-# AUTHORITY COUNTS FOR BAR CHART
-total_submitted = filtered_df['S.no'].count() if 'S.no' in filtered_df.columns else len(filtered_df)
-pending_ulb = filtered_df[filtered_df['Designation'].str.contains('ULB') & ~filtered_df['Designation'].str.contains('UDA|APCRDA|DTCP')].shape[0]
-pending_uda = filtered_df[filtered_df['Designation'].str.contains('UDA|APCRDA') & ~filtered_df['Designation'].str.contains('ULB|DTCP')].shape[0]
-pending_ltp = filtered_df[filtered_df['Designation'].str.contains('SHORTFALL')].shape[0]
-pending_dtcp = filtered_df[filtered_df['Designation'].str.contains('DTCP') & ~filtered_df['Designation'].str.contains('ULB|UDA|APCRDA')].shape[0]
-pending_govt = filtered_df[filtered_df['Designation'].str.contains('GOVT') & ~filtered_df['Designation'].str.contains('ULB|UDA|APCRDA|DTCP')].shape[0]
+# DEBUG - Show unique designations so you can see what's in the data
+with st.expander("🔍 Debug: See all Designations in data", expanded=False):
+    st.write("**Unique Designations found:**")
+    st.dataframe(pd.DataFrame({'Designation': filtered_df['Designation'].value_counts().index, 'Count': filtered_df['Designation'].value_counts().values}), use_container_width=True, hide_index=True)
 
-# DESIGNATION COUNTS FOR PIE CHART - WPRS, TPBO, MCVC, etc
-designation_counts = filtered_df['Designation'].value_counts().reset_index()
-designation_counts.columns = ['Designation', 'Count']
-designation_counts = designation_counts[designation_counts['Designation']!= '']
-designation_counts = designation_counts.sort_values('Count', ascending=False).head(10)
+# FIXED AUTHORITY MATCHING - Broader patterns
+def categorize_designation(desig):
+    desig = str(desig).upper()
+    if any(x in desig for x in ['ULB', 'MUNICIPAL', 'CORPORATION', 'NAGARA']):
+        return 'ULB'
+    elif any(x in desig for x in ['UDA', 'APCRDA', 'DEVELOPMENT AUTHORITY']):
+        return 'UDA'
+    elif any(x in desig for x in ['SHORTFALL', 'LTP', 'DEFICIENCY']):
+        return 'SHORTFALL'
+    elif any(x in desig for x in ['DTCP', 'DIRECTOR', 'TOWN PLANNING', 'TPBO', 'WPRS']):
+        return 'DTCP'
+    elif any(x in desig for x in ['GOVT', 'GOVERNMENT', 'SECRETARIAT', 'ADM', 'ADMIN', 'SECRETARY']):
+        return 'GOVT'
+    else:
+        return 'OTHER'
+
+filtered_df['Authority_Category'] = filtered_df['Designation'].apply(categorize_designation)
+
+# AUTHORITY COUNTS
+total_submitted = filtered_df['S.no'].count() if 'S.no' in filtered_df.columns else len(filtered_df)
+pending_ulb = filtered_df[filtered_df['Authority_Category'] == 'ULB'].shape[0]
+pending_uda = filtered_df[filtered_df['Authority_Category'] == 'UDA'].shape[0]
+pending_ltp = filtered_df[filtered_df['Authority_Category'] == 'SHORTFALL'].shape[0]
+pending_dtcp = filtered_df[filtered_df['Authority_Category'] == 'DTCP'].shape[0]
+pending_govt = filtered_df[filtered_df['Authority_Category'] == 'GOVT'].shape[0]
 
 # Metric Cards
 col1, col2, col3, col4, col5, col6 = st.columns(6, gap="small")
@@ -235,6 +252,11 @@ with col1:
 with col2:
     with st.container(border=True):
         st.markdown("##### 📈 Distribution by Designation")
+        designation_counts = filtered_df['Designation'].value_counts().reset_index()
+        designation_counts.columns = ['Designation', 'Count']
+        designation_counts = designation_counts[designation_counts['Designation']!= '']
+        designation_counts = designation_counts.sort_values('Count', ascending=False).head(10)
+
         if not designation_counts.empty:
             colors_pie = ['#3b82f6', '#8b5cf6', '#06b6d4', '#f59e0b', '#10b981', '#ef4444', '#ec4899', '#14b8a6', '#f97316', '#6366f1']
             fig = go.Figure(data=[go.Pie(
@@ -274,12 +296,12 @@ with st.container(border=True):
     with tab1:
         st.dataframe(filtered_df, use_container_width=True, hide_index=True, height=380)
     with tab2:
-        st.dataframe(filtered_df[filtered_df['Designation'].str.contains('ULB') & ~filtered_df['Designation'].str.contains('UDA|APCRDA|DTCP')], use_container_width=True, hide_index=True, height=380)
+        st.dataframe(filtered_df[filtered_df['Authority_Category'] == 'ULB'], use_container_width=True, hide_index=True, height=380)
     with tab3:
-        st.dataframe(filtered_df[filtered_df['Designation'].str.contains('UDA|APCRDA') & ~filtered_df['Designation'].str.contains('ULB|DTCP')], use_container_width=True, hide_index=True, height=380)
+        st.dataframe(filtered_df[filtered_df['Authority_Category'] == 'UDA'], use_container_width=True, hide_index=True, height=380)
     with tab4:
-        st.dataframe(filtered_df[filtered_df['Designation'].str.contains('SHORTFALL')], use_container_width=True, hide_index=True, height=380)
+        st.dataframe(filtered_df[filtered_df['Authority_Category'] == 'SHORTFALL'], use_container_width=True, hide_index=True, height=380)
     with tab5:
-        st.dataframe(filtered_df[filtered_df['Designation'].str.contains('DTCP') & ~filtered_df['Designation'].str.contains('ULB|UDA|APCRDA')], use_container_width=True, hide_index=True, height=380)
+        st.dataframe(filtered_df[filtered_df['Authority_Category'] == 'DTCP'], use_container_width=True, hide_index=True, height=380)
     with tab6:
-        st.dataframe(filtered_df[filtered_df['Designation'].str.contains('GOVT') & ~filtered_df['Designation'].str.contains('ULB|UDA|APCRDA|DTCP')], use_container_width=True, hide_index=True, height=380)
+        st.dataframe(filtered_df[filtered_df['Authority_Category'] == 'GOVT'], use_container_width=True, hide_index=True, height=380)
