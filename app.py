@@ -123,7 +123,9 @@ if 'Designation' not in df.columns:
     st.error(f"'Designation' column not found. Available: {df.columns.tolist()}")
     st.stop()
 
-df['Designation'] = df['Designation'].astype(str).str.upper().str.strip()
+# BETTER CLEANING - Remove extra spaces, handle variations
+df['Designation'] = df['Designation'].astype(str).str.upper().str.strip().str.replace(r'\s+', ' ', regex=True)
+df['Designation'] = df['Designation'].replace(['NAN', 'NONE', 'NULL', ''], 'UNASSIGNED')
 
 # FILTERS
 st.markdown('<div class="filter-container">', unsafe_allow_html=True)
@@ -162,23 +164,25 @@ if selected_uda!= 'All':
 if selected_ulb!= 'All' or selected_uda!= 'All':
     st.info(f"🔍 **Active Filters:** ULB: {selected_ulb} | UDA: {selected_uda}")
 
-# DEBUG - Show unique designations so you can see what's in the data
-with st.expander("🔍 Debug: See all Designations in data", expanded=False):
-    st.write("**Unique Designations found:**")
-    st.dataframe(pd.DataFrame({'Designation': filtered_df['Designation'].value_counts().index, 'Count': filtered_df['Designation'].value_counts().values}), use_container_width=True, hide_index=True)
+# DEBUG - Show ALL Designations with counts
+with st.expander("🔍 Debug: All Designations in Data (Click to verify APO, ADM, DTCP, GOVT)", expanded=False):
+    debug_counts = filtered_df['Designation'].value_counts().reset_index()
+    debug_counts.columns = ['Designation', 'Count']
+    st.dataframe(debug_counts, use_container_width=True, hide_index=True)
+    st.caption(f"Total unique designations: {len(debug_counts)}")
 
-# FIXED AUTHORITY MATCHING - Broader patterns
+# AUTHORITY CATEGORIZATION - Broader matching
 def categorize_designation(desig):
     desig = str(desig).upper()
-    if any(x in desig for x in ['ULB', 'MUNICIPAL', 'CORPORATION', 'NAGARA']):
+    if any(x in desig for x in ['ULB', 'MUNICIPAL', 'CORPORATION', 'NAGARA', 'MUNICIPALITY']):
         return 'ULB'
     elif any(x in desig for x in ['UDA', 'APCRDA', 'DEVELOPMENT AUTHORITY']):
         return 'UDA'
-    elif any(x in desig for x in ['SHORTFALL', 'LTP', 'DEFICIENCY']):
+    elif any(x in desig for x in ['SHORTFALL', 'LTP', 'DEFICIENCY', 'PENDING DOC']):
         return 'SHORTFALL'
-    elif any(x in desig for x in ['DTCP', 'DIRECTOR', 'TOWN PLANNING', 'TPBO', 'WPRS']):
+    elif any(x in desig for x in ['DTCP', 'DIRECTOR', 'TOWN PLANNING', 'TPBO', 'WPRS', 'TPG', 'TP']):
         return 'DTCP'
-    elif any(x in desig for x in ['GOVT', 'GOVERNMENT', 'SECRETARIAT', 'ADM', 'ADMIN', 'SECRETARY']):
+    elif any(x in desig for x in ['GOVT', 'GOVERNMENT', 'SECRETARIAT', 'ADM', 'ADMIN', 'SECRETARY', 'APO', 'AD', 'COMMISSIONER']):
         return 'GOVT'
     else:
         return 'OTHER'
@@ -252,20 +256,29 @@ with col1:
 with col2:
     with st.container(border=True):
         st.markdown("##### 📈 Distribution by Designation")
+        # SHOW ALL DESIGNATIONS - Combine small ones into "Others" if >15 items
         designation_counts = filtered_df['Designation'].value_counts().reset_index()
         designation_counts.columns = ['Designation', 'Count']
-        designation_counts = designation_counts[designation_counts['Designation']!= '']
-        designation_counts = designation_counts.sort_values('Count', ascending=False).head(10)
+        designation_counts = designation_counts[designation_counts['Designation']!= 'UNASSIGNED']
+        designation_counts = designation_counts.sort_values('Count', ascending=False)
+
+        # If more than 15 designations, group small ones
+        if len(designation_counts) > 15:
+            top_14 = designation_counts.head(14)
+            others_count = designation_counts.iloc[14:]['Count'].sum()
+            others_row = pd.DataFrame({'Designation': ['OTHERS'], 'Count': [others_count]})
+            designation_counts = pd.concat([top_14, others_row], ignore_index=True)
 
         if not designation_counts.empty:
-            colors_pie = ['#3b82f6', '#8b5cf6', '#06b6d4', '#f59e0b', '#10b981', '#ef4444', '#ec4899', '#14b8a6', '#f97316', '#6366f1']
+            colors_pie = ['#3b82f6', '#8b5cf6', '#06b6d4', '#f59e0b', '#10b981', '#ef4444', '#ec4899', '#14b8a6', '#f97316', '#6366f1', '#84cc16', '#06b6d4', '#a855f7', '#f43f5e', '#6b7280']
             fig = go.Figure(data=[go.Pie(
                 labels=designation_counts['Designation'],
                 values=designation_counts['Count'],
-                hole=0.65,
+                hole=0.55,
                 marker=dict(colors=colors_pie[:len(designation_counts)], line=dict(color='white', width=2)),
                 textinfo='label+percent',
-                textfont=dict(size=8, family='Inter'),
+                textfont=dict(size=7, family='Inter'),
+                textposition='auto',
                 hovertemplate='<b>%{label}</b><br>Files: %{value}<br>Percent: %{percent}<extra></extra>'
             )])
             fig.update_layout(
