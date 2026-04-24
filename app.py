@@ -165,7 +165,7 @@ if selected_ulb!= 'All' or selected_uda!= 'All':
     st.info(f"🔍 **Active Filters:** ULB: {selected_ulb} | UDA: {selected_uda}")
 
 # DEBUG - Show ALL Designations with counts
-with st.expander("🔍 Debug: All Designations in Data (Click to verify APO, ADM, DTCP, GOVT)", expanded=False):
+with st.expander("🔍 All Designations", expanded=False):
     debug_counts = filtered_df['Designation'].value_counts().reset_index()
     debug_counts.columns = ['Designation', 'Count']
     st.dataframe(debug_counts, use_container_width=True, hide_index=True)
