@@ -162,13 +162,19 @@ if selected_uda!= 'All':
 if selected_ulb!= 'All' or selected_uda!= 'All':
     st.info(f"🔍 **Active Filters:** ULB: {selected_ulb} | UDA: {selected_uda}")
 
-# AUTHORITY-WISE COUNTS
+# AUTHORITY COUNTS FOR BAR CHART
 total_submitted = filtered_df['S.no'].count() if 'S.no' in filtered_df.columns else len(filtered_df)
 pending_ulb = filtered_df[filtered_df['Designation'].str.contains('ULB') & ~filtered_df['Designation'].str.contains('UDA|APCRDA|DTCP')].shape[0]
 pending_uda = filtered_df[filtered_df['Designation'].str.contains('UDA|APCRDA') & ~filtered_df['Designation'].str.contains('ULB|DTCP')].shape[0]
 pending_ltp = filtered_df[filtered_df['Designation'].str.contains('SHORTFALL')].shape[0]
 pending_dtcp = filtered_df[filtered_df['Designation'].str.contains('DTCP') & ~filtered_df['Designation'].str.contains('ULB|UDA|APCRDA')].shape[0]
 pending_govt = filtered_df[filtered_df['Designation'].str.contains('GOVT') & ~filtered_df['Designation'].str.contains('ULB|UDA|APCRDA|DTCP')].shape[0]
+
+# DESIGNATION COUNTS FOR PIE CHART - WPRS, TPBO, MCVC, etc
+designation_counts = filtered_df['Designation'].value_counts().reset_index()
+designation_counts.columns = ['Designation', 'Count']
+designation_counts = designation_counts[designation_counts['Designation']!= '']
+designation_counts = designation_counts.sort_values('Count', ascending=False).head(10)
 
 # Metric Cards
 col1, col2, col3, col4, col5, col6 = st.columns(6, gap="small")
@@ -192,7 +198,7 @@ for col, (icon, label, value, color) in zip([col1, col2, col3, col4, col5, col6]
         </div>
         ''', unsafe_allow_html=True)
 
-# CHARTS - PENDENCY BY AUTHORITY ONLY
+# CHARTS
 col1, col2 = st.columns([3, 2], gap="small")
 
 with col1:
@@ -203,11 +209,11 @@ with col1:
             'Count': [pending_ulb, pending_uda, pending_ltp, pending_dtcp, pending_govt]
         })
         fig = go.Figure()
-        colors = ['#8b5cf6', '#06b6d4', '#f59e0b', '#10b981', '#ef4444']
+        colors_bar = ['#8b5cf6', '#06b6d4', '#f59e0b', '#10b981', '#ef4444']
         fig.add_trace(go.Bar(
             x=chart_data['Authority'],
             y=chart_data['Count'],
-            marker=dict(color=colors, line=dict(color='white', width=2)),
+            marker=dict(color=colors_bar, line=dict(color='white', width=2)),
             text=chart_data['Count'],
             textposition='outside',
             textfont=dict(size=11, family='Inter', color='#374151', weight=600),
@@ -228,26 +234,30 @@ with col1:
 
 with col2:
     with st.container(border=True):
-        st.markdown("##### 📈 Distribution Overview")
-        fig = go.Figure(data=[go.Pie(
-            labels=chart_data['Authority'],
-            values=chart_data['Count'],
-            hole=0.65,
-            marker=dict(colors=colors, line=dict(color='white', width=3)),
-            textinfo='label+percent',
-            textfont=dict(size=9, family='Inter'),
-            hovertemplate='<b>%{label}</b><br>Count: %{value}<br>Percent: %{percent}<extra></extra>'
-        )])
-        fig.update_layout(
-            showlegend=False,
-            plot_bgcolor='white',
-            paper_bgcolor='white',
-            font=dict(family='Inter', size=9),
-            height=340,
-            margin=dict(t=10, b=60, l=0, r=0),
-            annotations=[dict(text=f'{total_submitted:,}<br>Total', x=0.5, y=0.5, font_size=16, showarrow=False, font_family='Inter')]
-        )
-        st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+        st.markdown("##### 📈 Distribution by Designation")
+        if not designation_counts.empty:
+            colors_pie = ['#3b82f6', '#8b5cf6', '#06b6d4', '#f59e0b', '#10b981', '#ef4444', '#ec4899', '#14b8a6', '#f97316', '#6366f1']
+            fig = go.Figure(data=[go.Pie(
+                labels=designation_counts['Designation'],
+                values=designation_counts['Count'],
+                hole=0.65,
+                marker=dict(colors=colors_pie[:len(designation_counts)], line=dict(color='white', width=2)),
+                textinfo='label+percent',
+                textfont=dict(size=8, family='Inter'),
+                hovertemplate='<b>%{label}</b><br>Files: %{value}<br>Percent: %{percent}<extra></extra>'
+            )])
+            fig.update_layout(
+                showlegend=False,
+                plot_bgcolor='white',
+                paper_bgcolor='white',
+                font=dict(family='Inter', size=8),
+                height=340,
+                margin=dict(t=10, b=60, l=0, r=0),
+                annotations=[dict(text=f'{total_submitted:,}<br>Total', x=0.5, y=0.5, font_size=16, showarrow=False, font_family='Inter')]
+            )
+            st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+        else:
+            st.warning("No designation data available")
 
 # TABLE TABS - AUTHORITY WISE
 with st.container(border=True):
