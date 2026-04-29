@@ -119,13 +119,12 @@ df = load_data()
 if df.empty:
     st.stop()
 
-# FIXED: Check for 'Designation & Task Name' instead of 'Designation'
-if 'Designation & Task Name' not in df.columns:
-    st.error(f"'Designation & Task Name' column not found. Available: {df.columns.tolist()}")
+if 'Designation' not in df.columns:
+    st.error(f"'Designation' column not found. Available: {df.columns.tolist()}")
     st.stop()
 
-# FIXED: Create 'Designation' column from 'Designation & Task Name'
-df['Designation'] = df['Designation & Task Name'].astype(str).str.split('&').str[0].str.upper().str.strip().str.replace(r'\s+', ' ', regex=True)
+# CLEAN DESIGNATION COLUMN
+df['Designation'] = df['Designation'].astype(str).str.upper().str.strip().str.replace(r'\s+', ' ', regex=True)
 df['Designation'] = df['Designation'].replace(['NAN', 'NONE', 'NULL', ''], 'UNASSIGNED')
 
 # FILTERS
@@ -318,5 +317,4 @@ with st.container(border=True):
     with tab5:
         st.dataframe(filtered_df[filtered_df['Authority_Category'] == 'DTCP'], use_container_width=True, hide_index=True, height=380)
     with tab6:
-        st.dataframe(filtered_df[filtered_df['Authority_Category'] == 'GOVT'], use_container_width=True, hide_index=True, height=380)
         st.dataframe(filtered_df[filtered_df['Authority_Category'] == 'GOVT'], use_container_width=True, hide_index=True, height=380)
